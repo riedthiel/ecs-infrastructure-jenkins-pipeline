@@ -11,7 +11,7 @@ node {
       sh "aws cloudformation update-stack --stack-name ${stackname} --template-url https://s3.amazonaws.com/${s3bucket}/master.yaml --parameters file://./parameters/dev-parameters.json --capabilities CAPABILITY_NAMED_IAM  --region us-east-1 "
     } catch (all) {
       sh 'sed -i "s/UsePreviousValue/ParameterKey/g" ./parameters/dev-parameters.json'
-      sh 'sed -i "s/\"latest\"/true/g" ./parameters/dev-parameters.json'
+      sh 'sed -i "s/\\"latest\\"/true/g" ./parameters/dev-parameters.json'
       sh "aws cloudformation create-stack --stack-name ${stackname} --template-url https://s3.amazonaws.com/${s3bucket}/master.yaml --parameters file://./parameters/dev-parameters.json --capabilities CAPABILITY_NAMED_IAM  --region us-east-1 --disable-rollback"
     }
 
