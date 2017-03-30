@@ -1,0 +1,108 @@
+Description: >
+    This template contains the security groups required by our entire stack.
+    We create them in a seperate nested template, so they can be referenced
+    by all of the other nested templates.
+
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    VPC:
+        Type: AWS::EC2::VPC::Id
+        Description: Choose which VPC the security groups should be deployed to
+
+Resources:
+
+    ExternalLoadBalancerSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Access to the load balancer that sits in front of ECS
+            SecurityGroupIngress:
+                # Allow access from anywhere to our external stack load balancer
+                - CidrIp: 0.0.0.0/0
+                  FromPort: 80
+                  ToPort: 80
+                  IpProtocol: tcp
+                - CidrIp: 0.0.0.0/0
+                  FromPort: 443
+                  ToPort: 443
+                  IpProtocol: tcp
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-LoadBalancers
+
+    ExternalECSHostSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
+            SecurityGroupIngress:
+                # Only allow inbound access to ECS from the ELB
+                - SourceSecurityGroupId: !Ref ExternalLoadBalancerSecurityGroup
+                  IpProtocol: -1
+                - CidrIp: 10.0.0.0/8
+                  FromPort: 22
+                  ToPort: 22
+                  IpProtocol: tcp
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-ECS-Hosts
+
+    InternalLoadBalancerSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Access to the load balancer that sits in front of ECS
+            SecurityGroupIngress:
+                # Allow http access from the external ecs host security group
+                - SourceSecurityGroupId: !Ref ExternalECSHostSecurityGroup
+                  FromPort: 80
+                  ToPort: 80
+                  IpProtocol: tcp
+                # Allow https access from the external ecs host security group
+                - SourceSecurityGroupId: !Ref ExternalECSHostSecurityGroup
+                  FromPort: 443
+                  ToPort: 443
+                  IpProtocol: tcp
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-LoadBalancers
+
+    InternalECSHostSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
+            SecurityGroupIngress:
+                # Only allow inbound access to ECS from the ELB
+                - SourceSecurityGroupId: !Ref InternalLoadBalancerSecurityGroup
+                  IpProtocol: -1
+                # Allow ssh access to the ecs hosts from internal ip addresses
+                - CidrIp: 10.0.0.0/8
+                  FromPort: 22
+                  ToPort: 22
+                  IpProtocol: tcp
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-ECS-Hosts
+
+Outputs:
+
+    ExternalECSHostSecurityGroup:
+        Description: A reference to the security group for ECS hosts
+        Value: !Ref ExternalECSHostSecurityGroup
+
+    ExternalLoadBalancerSecurityGroup:
+        Description: A reference to the security group for load balancers
+        Value: !Ref ExternalLoadBalancerSecurityGroup
+
+    InternalECSHostSecurityGroup:
+        Description: A reference to the security group for ECS hosts
+        Value: !Ref InternalECSHostSecurityGroup
+
+    InternalLoadBalancerSecurityGroup:
+        Description: A reference to the security group for load balancers
+        Value: !Ref InternalLoadBalancerSecurityGroup

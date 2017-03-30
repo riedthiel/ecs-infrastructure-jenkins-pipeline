@@ -1,0 +1,26 @@
+[
+    {
+        "ParameterKey": "VPC",
+        "ParameterValue": "vpc-88301dee"
+    },
+    {
+        "ParameterKey": "Subnets",
+        "ParameterValue": "subnet-85a0a5de,subnet-c6c53c8e"
+    },
+    {
+        "ParameterKey": "KeyName",
+        "ParameterValue": "ACloudGuru"
+    },
+    {
+        "ParameterKey": "TemplateBucket",
+        "ParameterValue": "jw-ia-dev"
+    },
+    {
+        "ParameterKey": "Repository",
+        "ParameterValue": "mynginx"
+    },
+    {
+        "ParameterKey": "RepositoryTag",
+        "UsePreviousValue": "TRUE"
+    }
+]

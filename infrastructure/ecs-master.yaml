@@ -1,0 +1,107 @@
+Description: >
+
+    This template deploys a VPC, with a pair of public and private subnets spread
+    across two Availabilty Zones. It deploys an Internet Gateway, with a default
+    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),
+    and default routes for them in the private subnets.
+
+    It then deploys a highly available ECS cluster using an AutoScaling Group, with
+    ECS hosts distributed across multiple Availability Zones.
+
+    Finally, it deploys a pair of example ECS services from containers published in
+    Amazon EC2 Container Registry (Amazon ECR).
+
+    Last Modified: 3rd March 2017
+
+Parameters:
+
+    EnvironmentName:
+        Type: String
+
+    VPC:
+        Type: AWS::EC2::VPC::Id
+        Description: Choose which VPC the Applicaion Load Balancer should be deployed to
+
+    Subnets:
+        Description: Choose which subnets the Applicaion Load Balancer should be deployed to
+        Type: String
+
+    KeyName:
+        Description: Key pair name for ssh access
+        Type: String
+
+    LoadBalancerSecurityGroup:
+        Description: Security group to assign to load balancer
+        Type: String
+
+    ECSHostSecurityGroup:
+        Description: Security group to assign to EC2 hosts
+        Type: String
+
+    TemplateBucket:
+        Description: Bucket location of CF Templates
+        Type: String
+        Default: "acom-sde-cfn"
+
+    DesiredCount:
+        Description: Bucket location of CF Templates
+        Type: Number
+        Default: "2"
+
+    Repository:
+        Description: Bucket location of CF Templates
+        Type: String
+        Default: "my-httpd"
+
+    RepositoryTag:
+        Description: Bucket location of CF Templates
+        Type: String
+        Default: "latest"
+
+Resources:
+
+    ALB:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Join ["", [ "https://s3.amazonaws.com/", !Ref TemplateBucket, "/infrastructure/load-balancers.yaml" ] ]
+            Parameters:
+                EnvironmentName: !Ref EnvironmentName
+                VPC: !Ref VPC
+                Subnets: !Ref Subnets
+                SecurityGroup: !Ref LoadBalancerSecurityGroup
+
+    ECS:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Join ["", [ "https://s3.amazonaws.com/", !Ref TemplateBucket, "/infrastructure/ecs-cluster.yaml" ] ]
+            Parameters:
+                EnvironmentName: !Ref EnvironmentName
+                InstanceType: m4.xlarge
+                MinClusterSize: 2
+                MaxClusterSize: 6
+                DesiredClusterSize: 2
+                VPC: !Ref VPC
+                SecurityGroup: !Ref ECSHostSecurityGroup
+                Subnets: !Ref Subnets
+                KeyName: !Ref KeyName
+
+    Services:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Join ["", [ "https://s3.amazonaws.com/", !Ref TemplateBucket, "/infrastructure/ecs-service.yaml" ] ]
+            Parameters:
+                DesiredCount:  !Ref DesiredCount
+                TargetGroup: !GetAtt ALB.Outputs.TargetGroup
+                Cluster: !GetAtt ECS.Outputs.Cluster
+                Repository: !Ref Repository
+                RepositoryTag: !Ref RepositoryTag
+
+# Outputs:
+#
+#     ProductServiceUrl:
+#         Description: The URL endpoint for the product service
+#         Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
+#
+#     WebsiteServiceUrl:
+#         Description: The URL endpoint for the website service
+#         Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
