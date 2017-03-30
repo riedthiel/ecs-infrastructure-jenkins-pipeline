@@ -21,7 +21,6 @@
     },
     {
         "ParameterKey": "RepositoryTag",
-        "ParameterValue": "latest",
         "UsePreviousValue": true
     }
 ]
