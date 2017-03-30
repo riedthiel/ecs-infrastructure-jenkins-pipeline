@@ -17,7 +17,7 @@ node {
 
   stage 'Wait for Completion'
     result = sh(returnStdout: true, script: "aws cloudformation describe-stacks --stack-name ${stackname} --region us-east-1 --query 'Stacks[*].StackStatus' --output text")
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 10000; i++) {
       result = sh(returnStdout: true, script: "aws cloudformation describe-stacks --stack-name ${stackname} --region us-east-1 --query 'Stacks[*].StackStatus' --output text")
       if (result.contains("ERROR") || result.contains("ROLLBACK")) {
          error: "Error in Stack Build"
