@@ -43,7 +43,7 @@ Parameters:
     RepositoryTag:
         Description: Bucket location of CF Templates
         Type: String
-        Default: "001"
+        Default: "latest"
 
 Resources:
 
