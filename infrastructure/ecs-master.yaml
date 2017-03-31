@@ -76,7 +76,7 @@ Resources:
             TemplateURL: !Join ["", [ "https://s3.amazonaws.com/", !Ref TemplateBucket, "/infrastructure/ecs-cluster.yaml" ] ]
             Parameters:
                 EnvironmentName: !Ref EnvironmentName
-                InstanceType: m4.xlarge
+                InstanceType: m4.large
                 MinClusterSize: 2
                 MaxClusterSize: 6
                 DesiredClusterSize: 2
